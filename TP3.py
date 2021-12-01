@@ -2,6 +2,7 @@
 # This demos using modes (aka screens).
 
 from cmu_112_graphics import *
+import csv
 import random
 
 ##########################################
@@ -14,14 +15,89 @@ import random
 def splashScreenMode_redrawAll(app, canvas):
     font = 'Arial 26 bold'
     canvas.create_rectangle(0,0,app.width,app.height,fill="lightBlue")
-    canvas.create_text(app.width/2, 150, text='Welcome to Wean Path Finder',
+    canvas.create_text(app.width/2, 150, text='Welcome to Path Finder',
      font=font)
     #canvas.create_text(app.width/2, 200, text='This is a modal splash screen!',
     #  font=font)
-    canvas.create_text(app.width/2, 250, text='Press any key to start',font=font)
+    canvas.create_text(app.width/2, 250, text='Press any key to go to wean path finder',font=font)
+    canvas.create_rectangle(app.width/2-50,app.height/2-50,app.width/2+50,app.height/2+50,fill='black')
+    canvas.create_text(app.width/2,app.height/2,text="upload graph",fill='white')
 
-def splashScreenMode_keyPressed(app, event):
+def splashScreenMode_keyPressed(app,canvas):
     app.mode = 'gameMode'
+def splashScreenMode_mousePressed(app,event):
+    if event.x<app.width/2+50 and event.x>event.x/2-50 and event.y<app.height/2+50 and event.y>app.height/2-50:
+        app.mode='uploadScreenMode'
+#########################################
+#Upload Screen
+#########################################
+def uploadScreenMode_appStarted(app):
+    pass
+  
+def uploadScreenMode_redrawAll(app,canvas):
+    font = 'Arial 26 bold'
+    if app.fileName==None:
+        canvas.create_rectangle(0,0,app.width,app.height,fill="lightBlue")
+        canvas.create_text(app.width/2, 150, text='Upload any CSV with your floor plan coordinates',
+        font=font)
+        canvas.create_text(app.width/2, 250, text='press i to input file',
+        font=font)
+    if app.fileName!=None:
+        font = 'Arial 26 bold'
+   
+        canvas.create_rectangle(0,0,app.width,app.height,fill="lightBlue")
+        canvas.create_text(app.width/2, 250, text=f'finding shortest route from {app.fileName}, press g and say yes to retrieve it!',
+        font=font)
+
+def uploadScreenMode_keyPressed(app,event):
+    if (event.key == 'i'):
+         app.fileName= app.getUserInput('what is the filename?')
+    if event.key=='g':
+        if app.getUserInput('Do you want a map generation')== 'yes':
+            app.mode='graphMode'
+    uploadScreenMode_generateData(app)
+    
+     
+def uploadScreenMode_generateData(app):
+
+   with open(app.fileName,'r') as data:
+    for line in csv.reader(data):
+            if line[0] not in app.uploadGraphs:
+                app.uploadGraphs[line[0]]={line[1]:line[2]}
+            app.uploadGraphs[line[0]]=({line[1]:line[2]})
+            if line[0] not in app.uploadNodes:
+                app.uploadNodes.append(line[0])
+
+    app.uploadNodes=tuple(app.uploadNodes)
+    print(app.uploadGraphs)
+    print(app.uploadNodes) 
+
+
+
+
+######################################
+#graph  Mode
+
+######################################
+
+def graphMode_redrawAll(app,canvas):
+    font = 'Arial 26 bold'
+    canvas.create_rectangle(0,0,app.width,app.height,fill="lightBlue")
+    canvas.create_text(app.width/2, 150, text=f'The following graph and nodes have been generated:',font=font )
+    
+    canvas.create_text(app.width/2, 190, text=f'graph:{app.uploadGraphs}',font=font) 
+
+    canvas.create_text(app.width/2, 230, text=f'nodes:{app.uploadNodes}',font=font) 
+
+    canvas.create_rectangle(app.width/2-50,app.height/2-50,app.width/2+50,app.height/2+50,fill='black')
+    canvas.create_text(app.width/2,app.height/2,text="return",fill='white')
+def graphMode_mousePressed(app,event):
+    if event.x<app.width/2+50 and event.x>event.x/2-50 and event.y<app.height/2+50 and event.y>app.height/2-50:
+        appStarted(app)
+
+
+    
+
 ##########################################
 # Game Mode
 ##########################################
@@ -124,10 +200,7 @@ def gameMode_keyPressed(app, event):
 # Shortest Route generation
 ##########################################
 
-def routeMode_keyPressed(app, event):
-     if event.key=='g':
-        if app.getUserInput('Do you want a map generation')== 'yes':
-            app.mode='floorMode'  
+   
 def routeMode_mousePressed(app,event):
     #user can click generate map button
     if (event.x>(app.width/2-50) and event.x<app.width/2+50) and (event.y>(app.height/2)and event.y< (app.height/2+100)):
@@ -303,9 +376,21 @@ def appStarted(app):
     app.solution= None
     app.fill='red'
     app.move=0
+    app.help=0
 #Citation for help button image: https://www.google.com/search?q=help+button+transparent&tbm=isch&ved=2ahUKEwjWxN6Pq8D0AhXtlnIEHQO0AmgQ2-cCegQIABAA&oq=help+button+tra&gs_lcp=CgNpbWcQARgAMgUIABCABDIFCAAQgAQ6BAgAEEM6BAgAEBhQsQJYmgZgtw1oAHAAeACAAX6IAZ8DkgEDNC4xmAEAoAEBqgELZ3dzLXdpei1pbWfAAQE&sclient=img&ei=fTqmYZaSB-2tytMPg-iKwAY&bih=683&biw=1061#imgrc=vigsyUeoGKTM7M
 
-    app.help = 0
+# manually uploaded files! 
+
+    app.uploadGraphs=dict()
+    app.uploadNodes=[]
+    app.fileName=None
+    app.name= None
+    app.solutionUpload=None
+    app.uploadStart=None
+    app.uploadEnd=None
+    app.uploadParents=None
+    app.uploaddVisited=None
+    app.uploadDistance=None
 
     
 
